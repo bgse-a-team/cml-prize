@@ -5,13 +5,14 @@ library(e1071)
 # Data manipulation
 X_train <- as.data.frame(read_csv("X_train.dat"))
 X_train <- X_train[,-1]
-colnames(X_train) <- paste0(rep("X",78),1:78)
+X_train <- X_train[,-which(apply(X_train,2,function(x) all(x==0)))]
+colnames(X_train) <- paste0(rep("X",ncol(X_train)),1:ncol(X_train))
 X_train <- apply(X_train, 2, scale)
 y_train <- as.data.frame(read_csv("y_train.dat", col_names = FALSE))
 y_train <- as.factor(y_train[,2])
 
 # Cross-validation: split the data into 4 parts
-# KNN for 1-10 neightbours
+# KNN for 1-15 neightbours
 folds <- cut(seq(1:nrow(X_train)),breaks=4,labels=F)
 max_neightbours <- 15
 AUC <- matrix(rep(NA,max_neightbours*length(unique(folds))),ncol=max_neightbours)
@@ -27,6 +28,11 @@ for (i in 1:length(unique(folds))){
 }
 AUC
 apply(AUC,2,mean)
+
+for (i in 1:ncol(trainDataX)){
+  print(which(is.na(trainDataX[,i])))
+}
+  
 
 # SVM with linear kernel
 tuned_linear <- tune(svm, y_train ~ X_train[,1], kernel="linear", ranges=list(cost=c(0.1,1,10,100,1000)))
