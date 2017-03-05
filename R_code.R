@@ -10,7 +10,7 @@ X_train <- X_train[,-1]
 X_train <- X_train[,-which(apply(X_train,2,function(x) all(x==0)))]
 colnames(X_train) <- paste0(rep("X",ncol(X_train)),1:ncol(X_train))
 X_train <- apply(X_train, 2, scale)
-X_test <- as.data.frame(read_csv("X_test.dat"))[,1]
+X_test <- as.data.frame(read_csv("X_test.dat"))
 X_test <- X_test[,-1]
 X_test <- X_test[,-which(apply(X_test,2,function(x) all(x==0)))]
 colnames(X_test) <- paste0(rep("X",ncol(X_test)),1:ncol(X_test))
@@ -58,6 +58,17 @@ for (i in 1:length(unique(folds))){
 AUC
 which.max(apply(AUC,2,mean)) # 58 (0.709)
 plot(1:73,apply(AUC,2,mean),type="l")
+# Predicting testing data
+principal_components_train <- prcomp(X_train)$x[,1:58]
+complete_data <- as.data.frame(principal_components_train[drop=F])
+logistic_model <- glm(y_train ~ ., data=complete_data, family=binomial)
+principal_components_test <- prcomp(X_test)$x[,1:58]
+predictions <- predict(logistic_model, newdata=as.data.frame(principal_components_test[drop=F]), type="response")
+predictions[predictions < 0.5] <- 0
+predictions[predictions >= 0.5] <- 1
+pred <- cbind(as.matrix(read_csv("X_test.dat"))[,1], predictions)
+colnames(pred) <- c("Id","Prediction")
+write.csv(pred, file="second_submission.csv", row.names=F)
 
 # Logistic Regression and lasso
 folds <- cut(seq(1:nrow(X_train)),breaks=4,labels=F)
